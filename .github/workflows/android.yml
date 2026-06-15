@@ -50,8 +50,8 @@ jobs:
           AAB_FILE=$(ls $BUNDLE_DIR/*.aab | head -n 1)
           AAB_FILENAME=$(basename $AAB_FILE)
           
-          # Extract version info
-          versionName=$(java -jar /tmp/bundletool.jar dump manifest --bundle $AAB_FILE --xpath /manifest/@android:versionName)
+          # Extract version info - parse the XML attribute correctly
+          versionName=$(java -jar /tmp/bundletool.jar dump manifest --bundle $AAB_FILE | grep -oP 'versionName="\K[^"]+' || echo "unknown")
           echo "Version Name: $versionName"
           
           # Generate Universal APK
@@ -72,7 +72,7 @@ jobs:
           echo "aabFile=$AAB_FILE" >> $GITHUB_ENV
           echo "universalApk=NowbarMeter-$versionName-universal.apk" >> $GITHUB_ENV
 
-        - name: Upload APK Artifacts
+      - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-build
