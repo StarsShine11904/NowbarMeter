@@ -75,7 +75,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.versionName }}
-          body_path: CHANGELOG.md
+          body_path: "Release ${{ env.versionName }}"
           files: |
             ${{ env.aabFile }}
             ${{ env.universalApk }}
