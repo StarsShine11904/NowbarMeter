@@ -778,10 +778,10 @@ fun AboutSection() {
     )
     Preference(
         title = { Text(stringResource(R.string.settings_github)) },
-        summary = { Text("https://github.com/realMoai/NowbarMeter") },
+        summary = { Text("https://github.com/StarsShine11904/NowbarMeter") },
         onClick = {
             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-            uriHandler.openUri("https://github.com/realMoai/NowbarMeter")
+            uriHandler.openUri("https://github.com/StarsShine11904/NowbarMeter")
         }
     )
 }
