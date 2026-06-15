@@ -71,3 +71,12 @@ jobs:
           echo "versionName=$versionName" >> $GITHUB_ENV
           echo "aabFile=$AAB_FILE" >> $GITHUB_ENV
           echo "universalApk=NowbarMeter-$versionName-universal.apk" >> $GITHUB_ENV
+
+        - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: |
+            ${{ env.universalApk }}
+            ${{ env.aabFile }}
+          retention-days: 30
