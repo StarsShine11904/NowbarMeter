@@ -23,8 +23,8 @@ android {
         applicationId = "com.kakao.taxi"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 2
-        versionName = "1.2"
+        versionCode = 1
+        versionName = "1.0"
     }
     packaging {
         resources {
