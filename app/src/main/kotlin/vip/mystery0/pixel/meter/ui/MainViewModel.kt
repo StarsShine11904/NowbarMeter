@@ -55,7 +55,7 @@ class MainViewModel(
     fun checkForUpdates(currentVersion: String, skippedVersion: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val url = URL("https://api.github.com/repos/realMoai/NowbarMeter/releases/latest")
+                val url = URL("https://api.github.com/repos/StarsShine11904/NowbarMeter/releases/latest")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
                 connection.connectTimeout = 5000
