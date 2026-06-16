@@ -62,6 +62,17 @@ class DataStoreRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_BLANK_NOTIFICATION = booleanPreferencesKey("key_blank_notification")
         val KEY_NOTIFICATION_TRANSPARENT_ICON = booleanPreferencesKey("key_notification_transparent_icon")
         val KEY_SKIPPED_UPDATE_VERSION = stringPreferencesKey("key_skipped_update_version")
+
+        val KEY_OVERLAY_SHOW_ON_STATUS_BAR = booleanPreferencesKey("key_overlay_show_on_status_bar")
+        val KEY_OVERLAY_PADDING = intPreferencesKey("key_overlay_padding")
+        val KEY_OVERLAY_HIDE_BACKGROUND = booleanPreferencesKey("key_overlay_hide_background")
+        val KEY_OVERLAY_DIRECTION = intPreferencesKey("key_overlay_direction")
+        val KEY_OVERLAY_ALIGNMENT = intPreferencesKey("key_overlay_alignment")
+        val KEY_OVERLAY_METER_SPACING = intPreferencesKey("key_overlay_meter_spacing")
+        val KEY_OVERLAY_PORTRAIT_ONLY = booleanPreferencesKey("key_overlay_portrait_only")
+        val KEY_OVERLAY_HIDE_IN_IMMERSIVE_MODE = booleanPreferencesKey("key_overlay_hide_in_immersive_mode")
+        val KEY_OVERLAY_AUTO_HIDE_THRESHOLD = longPreferencesKey("key_overlay_auto_hide_threshold")
+        val KEY_MIN_SPEED_UNIT = stringPreferencesKey("key_min_speed_unit")
     }
 
     val isLiveUpdateEnabled: Flow<Boolean> = dataStore.data
@@ -141,6 +152,16 @@ class DataStoreRepository(private val dataStore: DataStore<Preferences>) {
         .map { preferences ->
             preferences[KEY_OVERLAY_ORDER_UP_FIRST] ?: false // Default FALSE (Download first)
         }
+
+    val isOverlayShowOnStatusBar: Flow<Boolean> = dataStore.data.map { it[KEY_OVERLAY_SHOW_ON_STATUS_BAR] ?: false }
+    val overlayPadding: Flow<Int> = dataStore.data.map { it[KEY_OVERLAY_PADDING] ?: 8 }
+    val isOverlayHideBackground: Flow<Boolean> = dataStore.data.map { it[KEY_OVERLAY_HIDE_BACKGROUND] ?: false }
+    val overlayDirection: Flow<Int> = dataStore.data.map { it[KEY_OVERLAY_DIRECTION] ?: 0 }
+    val overlayAlignment: Flow<Int> = dataStore.data.map { it[KEY_OVERLAY_ALIGNMENT] ?: 0 }
+    val overlayMeterSpacing: Flow<Int> = dataStore.data.map { it[KEY_OVERLAY_METER_SPACING] ?: 8 }
+    val isOverlayPortraitOnly: Flow<Boolean> = dataStore.data.map { it[KEY_OVERLAY_PORTRAIT_ONLY] ?: false }
+    val isOverlayHideInImmersiveMode: Flow<Boolean> = dataStore.data.map { it[KEY_OVERLAY_HIDE_IN_IMMERSIVE_MODE] ?: false }
+    val overlayAutoHideThreshold: Flow<Long> = dataStore.data.map { it[KEY_OVERLAY_AUTO_HIDE_THRESHOLD] ?: 0L }
 
     val notificationTextUp: Flow<String> = dataStore.data
         .map { preferences ->
@@ -280,6 +301,16 @@ class DataStoreRepository(private val dataStore: DataStore<Preferences>) {
         }
     }
 
+    suspend fun setOverlayShowOnStatusBar(show: Boolean) { dataStore.edit { it[KEY_OVERLAY_SHOW_ON_STATUS_BAR] = show } }
+    suspend fun setOverlayPadding(padding: Int) { dataStore.edit { it[KEY_OVERLAY_PADDING] = padding } }
+    suspend fun setOverlayHideBackground(hideBackground: Boolean) { dataStore.edit { it[KEY_OVERLAY_HIDE_BACKGROUND] = hideBackground } }
+    suspend fun setOverlayDirection(direction: Int) { dataStore.edit { it[KEY_OVERLAY_DIRECTION] = direction } }
+    suspend fun setOverlayAlignment(alignment: Int) { dataStore.edit { it[KEY_OVERLAY_ALIGNMENT] = alignment } }
+    suspend fun setOverlayMeterSpacing(spacing: Int) { dataStore.edit { it[KEY_OVERLAY_METER_SPACING] = spacing } }
+    suspend fun setOverlayPortraitOnly(portraitOnly: Boolean) { dataStore.edit { it[KEY_OVERLAY_PORTRAIT_ONLY] = portraitOnly } }
+    suspend fun setOverlayHideInImmersiveMode(hideInImmersiveMode: Boolean) { dataStore.edit { it[KEY_OVERLAY_HIDE_IN_IMMERSIVE_MODE] = hideInImmersiveMode } }
+    suspend fun setOverlayAutoHideThreshold(threshold: Long) { dataStore.edit { it[KEY_OVERLAY_AUTO_HIDE_THRESHOLD] = threshold } }
+
     suspend fun setNotificationTextUp(text: String) {
         dataStore.edit { preferences ->
             preferences[KEY_NOTIFICATION_TEXT_UP] = text
@@ -382,6 +413,12 @@ class DataStoreRepository(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { preferences ->
             preferences[KEY_SPEED_UNIT] = unit
         }
+    }
+
+    val minSpeedUnit: Flow<String> = dataStore.data.map { it[KEY_MIN_SPEED_UNIT] ?: "0" }
+
+    suspend fun setMinSpeedUnit(unit: String) {
+        dataStore.edit { it[KEY_MIN_SPEED_UNIT] = unit }
     }
 
     val isOledThemeEnabled: Flow<Boolean> = dataStore.data
