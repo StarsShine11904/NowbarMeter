@@ -174,6 +174,33 @@ fun GeneralSection(viewModel: SettingsViewModel) {
         onValueChange = { viewModel.setSpeedUnit(it) }
     )
 
+    val minSpeedUnit by viewModel.minSpeedUnit.collectAsState(initial = "0")
+    val labelNone = stringResource(R.string.settings_min_speed_unit_none)
+    val minSpeedUnitValues = listOf(labelNone, "KB/s", "MB/s", "GB/s")
+    val minSpeedUnitLabel = when (minSpeedUnit) {
+        "1" -> "KB/s"
+        "2" -> "MB/s"
+        "3" -> "GB/s"
+        else -> labelNone
+    }
+
+    ListPreference(
+        value = minSpeedUnitLabel,
+        onValueChange = {
+            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            val unitStr = when (it) {
+                "KB/s" -> "1"
+                "MB/s" -> "2"
+                "GB/s" -> "3"
+                else -> "0"
+            }
+            viewModel.setMinSpeedUnit(unitStr)
+        },
+        title = { Text(stringResource(R.string.settings_min_speed_unit)) },
+        values = minSpeedUnitValues,
+        summary = { Text(minSpeedUnitLabel) }
+    )
+
     SwitchPreference(
         value = isOledThemeEnabled,
         onValueChange = { isChecked ->
@@ -382,6 +409,17 @@ fun OverlaySection(viewModel: SettingsViewModel) {
     val textUp by viewModel.overlayTextUp.collectAsState(initial = "▲ ")
     val textDown by viewModel.overlayTextDown.collectAsState(initial = "▼ ")
     val upFirst by viewModel.overlayOrderUpFirst.collectAsState(initial = true)
+    val isOverlayShowOnStatusBar by viewModel.isOverlayShowOnStatusBar.collectAsState(initial = false)
+    val padding by viewModel.overlayPadding.collectAsState(initial = 8)
+    val isOverlayHideBackground by viewModel.isOverlayHideBackground.collectAsState(initial = false)
+    val overlayX by viewModel.overlayX.collectAsState(initial = 100)
+    val overlayY by viewModel.overlayY.collectAsState(initial = 200)
+    val isOverlayPortraitOnly by viewModel.isOverlayPortraitOnly.collectAsState(initial = false)
+    val isOverlayHideInImmersiveMode by viewModel.isOverlayHideInImmersiveMode.collectAsState(initial = false)
+    val overlayAutoHideThreshold by viewModel.overlayAutoHideThreshold.collectAsState(initial = 0L)
+    val direction by viewModel.overlayDirection.collectAsState(initial = 0)
+    val alignment by viewModel.overlayAlignment.collectAsState(initial = 0)
+    val meterSpacing by viewModel.overlayMeterSpacing.collectAsState(initial = 8)
 
     PreferenceCategory(title = { Text(stringResource(R.string.settings_category_overlay)) })
     val isSwitchEnabled = !isServiceRunning || canOverlay
@@ -420,10 +458,114 @@ fun OverlaySection(viewModel: SettingsViewModel) {
             title = { Text(stringResource(R.string.settings_overlay_use_default_colors)) },
             summary = { Text(stringResource(R.string.settings_overlay_use_default_colors_desc)) }
         )
+        SwitchPreference(
+            value = isOverlayShowOnStatusBar,
+            onValueChange = { 
+                performToggleHaptic(view, it)
+                viewModel.setOverlayShowOnStatusBar(it) 
+            },
+            title = { Text(stringResource(R.string.settings_overlay_show_on_status_bar)) },
+            summary = { Text(stringResource(R.string.settings_overlay_show_on_status_bar_desc)) }
+        )
+        TextFieldPreference(
+            value = overlayX.toString(),
+            onValueChange = {
+                val x = it.toIntOrNull()
+                if (x != null) {
+                    viewModel.setOverlayPosition(x, overlayY)
+                }
+            },
+            title = { Text(stringResource(R.string.settings_overlay_position_x)) },
+            summary = { Text(stringResource(R.string.settings_overlay_position_x_desc)) },
+            textToValue = { it },
+        )
+        TextFieldPreference(
+            value = overlayY.toString(),
+            onValueChange = {
+                val y = it.toIntOrNull()
+                if (y != null) {
+                    viewModel.setOverlayPosition(overlayX, y)
+                }
+            },
+            title = { Text(stringResource(R.string.settings_overlay_position_y)) },
+            summary = { Text(stringResource(R.string.settings_overlay_position_y_desc)) },
+            textToValue = { it },
+        )
+        SwitchPreference(
+            value = isOverlayPortraitOnly,
+            onValueChange = { 
+                performToggleHaptic(view, it)
+                viewModel.setOverlayPortraitOnly(it) 
+            },
+            title = { Text(stringResource(R.string.settings_overlay_portrait_only)) },
+            summary = { Text(stringResource(R.string.settings_overlay_portrait_only_desc)) }
+        )
+        SwitchPreference(
+            value = isOverlayHideInImmersiveMode,
+            onValueChange = { 
+                performToggleHaptic(view, it)
+                viewModel.setOverlayHideInImmersiveMode(it) 
+            },
+            title = { Text(stringResource(R.string.settings_overlay_hide_in_immersive_mode)) },
+            summary = {
+                Text(stringResource(R.string.settings_overlay_hide_in_immersive_mode_desc))
+            }
+        )
+        SliderPreference(
+            value = 0F,
+            onValueChange = { },
+            sliderValue = overlayAutoHideThreshold.toFloat() / 1024,
+            onSliderValueChange = {
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                viewModel.setOverlayAutoHideThreshold((it * 1024).toLong())
+            },
+            valueRange = 0f..1024f,
+            valueSteps = 20,
+            title = { Text(stringResource(R.string.settings_overlay_auto_hide_threshold)) },
+            summary = {
+                if (overlayAutoHideThreshold == 0L) {
+                    Text(stringResource(R.string.settings_overlay_auto_hide_threshold_disabled))
+                } else {
+                    val thresholdText = NetworkRepository.formatSpeedLine(overlayAutoHideThreshold)
+                    Text(
+                        stringResource(
+                            R.string.settings_overlay_auto_hide_threshold_desc,
+                            thresholdText
+                        )
+                    )
+                }
+            },
+            valueText = {
+                Text(NetworkRepository.formatSpeedLine(overlayAutoHideThreshold))
+            }
+        )
+        TextFieldPreference(
+            value = (overlayAutoHideThreshold / 1024).toString(),
+            onValueChange = {
+                val kb = it.toLongOrNull()
+                if (kb != null && kb >= 0) {
+                    viewModel.setOverlayAutoHideThreshold(kb * 1024)
+                }
+            },
+            title = { Text(stringResource(R.string.settings_overlay_auto_hide_threshold_input_title)) },
+            summary = {
+                Text(stringResource(R.string.settings_overlay_auto_hide_threshold_input_summary))
+            },
+            textToValue = { it },
+        )
+        SwitchPreference(
+            value = isOverlayHideBackground,
+            onValueChange = { 
+                performToggleHaptic(view, it)
+                viewModel.setOverlayHideBackground(it) 
+            },
+            title = { Text(stringResource(R.string.settings_overlay_hide_background)) },
+            summary = { Text(stringResource(R.string.settings_overlay_hide_background_desc)) }
+        )
         ColorPreference(
             title = stringResource(R.string.settings_overlay_bg_color),
             color = Color(bgColor),
-            enabled = !isOverlayUseDefaultColors,
+            enabled = !isOverlayUseDefaultColors && !isOverlayHideBackground,
             onColorSelected = { viewModel.setOverlayBgColor(it.toArgb()) }
         )
         ColorPreference(
@@ -444,6 +586,19 @@ fun OverlaySection(viewModel: SettingsViewModel) {
             valueSteps = 32,
             title = { Text(stringResource(R.string.settings_overlay_corner_radius)) },
             valueText = { Text("${cornerRadius}dp") }
+        )
+        SliderPreference(
+            value = 0F,
+            onValueChange = { },
+            sliderValue = padding.toFloat(),
+            onSliderValueChange = { 
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                viewModel.setOverlayPadding(it.toInt()) 
+            },
+            valueRange = 0f..24f,
+            valueSteps = 24,
+            title = { Text(stringResource(R.string.settings_overlay_padding)) },
+            valueText = { Text("${padding}dp") }
         )
         SliderPreference(
             value = 0F,
@@ -485,6 +640,70 @@ fun OverlaySection(viewModel: SettingsViewModel) {
             },
             title = { Text(stringResource(R.string.settings_show_up_first)) },
             summary = { Text(stringResource(R.string.settings_show_up_first_desc)) }
+        )
+
+        val labelHorizontal = stringResource(R.string.settings_overlay_direction_horizontal)
+        val labelVertical = stringResource(R.string.settings_overlay_direction_vertical)
+        val directionLabel = when (direction) {
+            1 -> labelVertical
+            else -> labelHorizontal
+        }
+
+        ListPreference(
+            value = directionLabel,
+            onValueChange = {
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                val dir = when (it) {
+                    labelVertical -> 1
+                    else -> 0
+                }
+                viewModel.setOverlayDirection(dir)
+            },
+            title = { Text(stringResource(R.string.settings_overlay_direction)) },
+            values = listOf(labelHorizontal, labelVertical),
+            summary = { Text(directionLabel) }
+        )
+
+        SliderPreference(
+            value = 0F,
+            onValueChange = { },
+            sliderValue = meterSpacing.toFloat(),
+            onSliderValueChange = { 
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                viewModel.setOverlayMeterSpacing(it.toInt()) 
+            },
+            valueRange = 0f..120f,
+            valueSteps = 24,
+            title = { Text(stringResource(R.string.settings_overlay_meter_spacing)) },
+            summary = { Text(stringResource(R.string.settings_overlay_meter_spacing_desc)) },
+            valueText = { Text("${meterSpacing}dp") },
+            enabled = direction == 0
+        )
+
+        val labelAlignStart = stringResource(R.string.settings_overlay_alignment_start)
+        val labelAlignCenter = stringResource(R.string.settings_overlay_alignment_center)
+        val labelAlignEnd = stringResource(R.string.settings_overlay_alignment_end)
+        val alignmentLabel = when (alignment) {
+            1 -> labelAlignCenter
+            2 -> labelAlignEnd
+            else -> labelAlignStart
+        }
+
+        ListPreference(
+            value = alignmentLabel,
+            onValueChange = {
+                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                val align = when (it) {
+                    labelAlignCenter -> 1
+                    labelAlignEnd -> 2
+                    else -> 0
+                }
+                viewModel.setOverlayAlignment(align)
+            },
+            title = { Text(stringResource(R.string.settings_overlay_alignment)) },
+            values = listOf(labelAlignStart, labelAlignCenter, labelAlignEnd),
+            summary = { Text(alignmentLabel) },
+            enabled = direction == 1
         )
     }
 }

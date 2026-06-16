@@ -40,6 +40,9 @@ class NetworkRepository(
     private val _isOverlayLocked = MutableStateFlow(false)
     val isOverlayLocked: StateFlow<Boolean> = _isOverlayLocked.asStateFlow()
 
+    private val _isOverlayShowOnStatusBar = MutableStateFlow(false)
+    val isOverlayShowOnStatusBar: StateFlow<Boolean> = _isOverlayShowOnStatusBar.asStateFlow()
+
     private val _isMonitoring = MutableStateFlow(false)
     val isMonitoring: StateFlow<Boolean> = _isMonitoring.asStateFlow()
 
@@ -69,6 +72,30 @@ class NetworkRepository(
 
     private val _overlayOrderUpFirst = MutableStateFlow(true)
     val overlayOrderUpFirst: StateFlow<Boolean> = _overlayOrderUpFirst.asStateFlow()
+
+    private val _overlayPadding = MutableStateFlow(8)
+    val overlayPadding: StateFlow<Int> = _overlayPadding.asStateFlow()
+
+    private val _isOverlayHideBackground = MutableStateFlow(false)
+    val isOverlayHideBackground: StateFlow<Boolean> = _isOverlayHideBackground.asStateFlow()
+
+    private val _overlayDirection = MutableStateFlow(0)
+    val overlayDirection: StateFlow<Int> = _overlayDirection.asStateFlow()
+
+    private val _overlayAlignment = MutableStateFlow(0)
+    val overlayAlignment: StateFlow<Int> = _overlayAlignment.asStateFlow()
+
+    private val _overlayMeterSpacing = MutableStateFlow(8)
+    val overlayMeterSpacing: StateFlow<Int> = _overlayMeterSpacing.asStateFlow()
+
+    private val _isOverlayPortraitOnly = MutableStateFlow(false)
+    val isOverlayPortraitOnly: StateFlow<Boolean> = _isOverlayPortraitOnly.asStateFlow()
+
+    private val _isOverlayHideInImmersiveMode = MutableStateFlow(false)
+    val isOverlayHideInImmersiveMode: StateFlow<Boolean> = _isOverlayHideInImmersiveMode.asStateFlow()
+
+    private val _overlayAutoHideThreshold = MutableStateFlow(0L)
+    val overlayAutoHideThreshold: StateFlow<Long> = _overlayAutoHideThreshold.asStateFlow()
 
     private val _notificationTextUp = MutableStateFlow("▲ ")
     val notificationTextUp: StateFlow<String> = _notificationTextUp.asStateFlow()
@@ -111,6 +138,9 @@ class NetworkRepository(
 
     private val _speedUnit = MutableStateFlow("0")
     val speedUnit: StateFlow<String> = _speedUnit.asStateFlow()
+
+    private val _minSpeedUnit = MutableStateFlow("0")
+    val minSpeedUnit: StateFlow<String> = _minSpeedUnit.asStateFlow()
 
     private val _isOledThemeEnabled = MutableStateFlow(false)
     val isOledThemeEnabled: StateFlow<Boolean> = _isOledThemeEnabled.asStateFlow()
@@ -155,6 +185,15 @@ class NetworkRepository(
                 _overlayTextDown.value = prefs[DataStoreRepository.KEY_OVERLAY_TEXT_DOWN] ?: "▼ "
                 _overlayOrderUpFirst.value =
                     prefs[DataStoreRepository.KEY_OVERLAY_ORDER_UP_FIRST] ?: true
+                _isOverlayShowOnStatusBar.value = prefs[DataStoreRepository.KEY_OVERLAY_SHOW_ON_STATUS_BAR] ?: false
+                _overlayPadding.value = prefs[DataStoreRepository.KEY_OVERLAY_PADDING] ?: 8
+                _isOverlayHideBackground.value = prefs[DataStoreRepository.KEY_OVERLAY_HIDE_BACKGROUND] ?: false
+                _overlayDirection.value = prefs[DataStoreRepository.KEY_OVERLAY_DIRECTION] ?: 0
+                _overlayAlignment.value = prefs[DataStoreRepository.KEY_OVERLAY_ALIGNMENT] ?: 0
+                _overlayMeterSpacing.value = prefs[DataStoreRepository.KEY_OVERLAY_METER_SPACING] ?: 8
+                _isOverlayPortraitOnly.value = prefs[DataStoreRepository.KEY_OVERLAY_PORTRAIT_ONLY] ?: false
+                _isOverlayHideInImmersiveMode.value = prefs[DataStoreRepository.KEY_OVERLAY_HIDE_IN_IMMERSIVE_MODE] ?: false
+                _overlayAutoHideThreshold.value = prefs[DataStoreRepository.KEY_OVERLAY_AUTO_HIDE_THRESHOLD] ?: 0L
                 _notificationTextUp.value =
                     prefs[DataStoreRepository.KEY_NOTIFICATION_TEXT_UP] ?: "▲ "
                 _notificationTextDown.value =
@@ -180,6 +219,7 @@ class NetworkRepository(
                     prefs[DataStoreRepository.KEY_NOTIFICATION_USE_CUSTOM_COLOR] ?: false
                 _notificationColor.value = prefs[DataStoreRepository.KEY_NOTIFICATION_COLOR] ?: 0xFF888888.toInt()
                 _speedUnit.value = prefs[DataStoreRepository.KEY_SPEED_UNIT] ?: "0"
+                _minSpeedUnit.value = prefs[DataStoreRepository.KEY_MIN_SPEED_UNIT] ?: "0"
                 _isOledThemeEnabled.value = prefs[DataStoreRepository.KEY_OLED_THEME] ?: false
                 _isCompactSpeedTextEnabled.value =
                     prefs[DataStoreRepository.KEY_COMPACT_SPEED_TEXT] ?: true
@@ -228,6 +268,15 @@ class NetworkRepository(
         scope.launch {
             dataStoreRepository.overlayOrderUpFirst.collect { _overlayOrderUpFirst.value = it }
         }
+        scope.launch { dataStoreRepository.isOverlayShowOnStatusBar.collect { _isOverlayShowOnStatusBar.value = it } }
+        scope.launch { dataStoreRepository.overlayPadding.collect { _overlayPadding.value = it } }
+        scope.launch { dataStoreRepository.isOverlayHideBackground.collect { _isOverlayHideBackground.value = it } }
+        scope.launch { dataStoreRepository.overlayDirection.collect { _overlayDirection.value = it } }
+        scope.launch { dataStoreRepository.overlayAlignment.collect { _overlayAlignment.value = it } }
+        scope.launch { dataStoreRepository.overlayMeterSpacing.collect { _overlayMeterSpacing.value = it } }
+        scope.launch { dataStoreRepository.isOverlayPortraitOnly.collect { _isOverlayPortraitOnly.value = it } }
+        scope.launch { dataStoreRepository.isOverlayHideInImmersiveMode.collect { _isOverlayHideInImmersiveMode.value = it } }
+        scope.launch { dataStoreRepository.overlayAutoHideThreshold.collect { _overlayAutoHideThreshold.value = it } }
         scope.launch {
             dataStoreRepository.notificationTextUp.collect { _notificationTextUp.value = it }
         }
@@ -292,6 +341,11 @@ class NetworkRepository(
         scope.launch {
             dataStoreRepository.speedUnit.collect {
                 _speedUnit.value = it
+            }
+        }
+        scope.launch {
+            dataStoreRepository.minSpeedUnit.collect {
+                _minSpeedUnit.value = it
             }
         }
         scope.launch {
@@ -368,6 +422,16 @@ class NetworkRepository(
         scope.launch { dataStoreRepository.setOverlayOrderUpFirst(upFirst) }
     }
 
+    fun setOverlayShowOnStatusBar(show: Boolean) { scope.launch { dataStoreRepository.setOverlayShowOnStatusBar(show) } }
+    fun setOverlayPadding(padding: Int) { scope.launch { dataStoreRepository.setOverlayPadding(padding) } }
+    fun setOverlayHideBackground(hideBackground: Boolean) { scope.launch { dataStoreRepository.setOverlayHideBackground(hideBackground) } }
+    fun setOverlayDirection(direction: Int) { scope.launch { dataStoreRepository.setOverlayDirection(direction) } }
+    fun setOverlayAlignment(alignment: Int) { scope.launch { dataStoreRepository.setOverlayAlignment(alignment) } }
+    fun setOverlayMeterSpacing(spacing: Int) { scope.launch { dataStoreRepository.setOverlayMeterSpacing(spacing) } }
+    fun setOverlayPortraitOnly(portraitOnly: Boolean) { scope.launch { dataStoreRepository.setOverlayPortraitOnly(portraitOnly) } }
+    fun setOverlayHideInImmersiveMode(hideInImmersiveMode: Boolean) { scope.launch { dataStoreRepository.setOverlayHideInImmersiveMode(hideInImmersiveMode) } }
+    fun setOverlayAutoHideThreshold(threshold: Long) { scope.launch { dataStoreRepository.setOverlayAutoHideThreshold(threshold) } }
+
     fun setNotificationTextUp(text: String) {
         scope.launch { dataStoreRepository.setNotificationTextUp(text) }
     }
@@ -422,6 +486,10 @@ class NetworkRepository(
 
     fun setSpeedUnit(unit: String) {
         scope.launch { dataStoreRepository.setSpeedUnit(unit) }
+    }
+
+    fun setMinSpeedUnit(unit: String) {
+        scope.launch { dataStoreRepository.setMinSpeedUnit(unit) }
     }
 
     fun setOledThemeEnabled(enabled: Boolean) {
@@ -536,10 +604,30 @@ class NetworkRepository(
         fun formatSpeedText(
             bytes: Long,
             speedUnit: String = "0",
-            compact: Boolean = false
+            compact: Boolean = false,
+            minSpeedUnit: String = "0"
         ): Pair<String, String> {
             val selectedUnits = speedUnit.split(",").mapNotNull { it.trim().toIntOrNull() }.toSet()
             val useAuto = selectedUnits.isEmpty() || selectedUnits.contains(0)
+
+            val minUnitInt = minSpeedUnit.toIntOrNull() ?: 0
+            if (minUnitInt > 0 && useAuto) {
+                val minThreshold = when (minUnitInt) {
+                    1 -> 1024L
+                    2 -> 1048576L
+                    3 -> 1073741824L
+                    else -> 0L
+                }
+                if (bytes < minThreshold) {
+                    val unitStr = when (minUnitInt) {
+                        1 -> "KB/s"
+                        2 -> "MB/s"
+                        3 -> "GB/s"
+                        else -> "B/s"
+                    }
+                    return "0" to unitStr
+                }
+            }
 
             val unitToUse = if (useAuto) {
                 when {
@@ -598,18 +686,20 @@ class NetworkRepository(
         fun formatSpeedLine(
             bytes: Long,
             speedUnit: String = "0",
-            compact: Boolean = false
+            compact: Boolean = false,
+            minSpeedUnit: String = "0"
         ): String {
-            val (v, u) = formatSpeedText(bytes, speedUnit, compact)
+            val (v, u) = formatSpeedText(bytes, speedUnit, compact, minSpeedUnit)
             return "$v$u"
         }
 
         fun formatSpeedTextForLiveUpdate(
             bytes: Long,
             speedUnit: String = "0",
-            compact: Boolean = false
+            compact: Boolean = false,
+            minSpeedUnit: String = "0"
         ): String {
-            val (v, u) = formatSpeedText(bytes, speedUnit, compact)
+            val (v, u) = formatSpeedText(bytes, speedUnit, compact, minSpeedUnit)
             return "$v$u"
         }
     }

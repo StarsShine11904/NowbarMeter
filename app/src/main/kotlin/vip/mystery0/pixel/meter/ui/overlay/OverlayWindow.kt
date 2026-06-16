@@ -1,29 +1,41 @@
 package com.kakao.taxi.ui.overlay
 
+import android.content.ComponentCallbacks
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -49,6 +61,10 @@ class OverlayWindow(
     private val repository: NetworkRepository
 ) : LifecycleOwner, ViewModelStoreOwner,
     SavedStateRegistryOwner {
+    private companion object {
+        const val LOW_TRAFFIC_HIDE_SAMPLE_COUNT = 3
+    }
+
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var view: View? = null
     private var params: WindowManager.LayoutParams? = null
@@ -58,6 +74,7 @@ class OverlayWindow(
     private var store = ViewModelStore()
 
     private var speedState by mutableStateOf(NetSpeedData(0, 0))
+    private var speedUpdateVersion by mutableLongStateOf(0L)
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val viewModelStore: ViewModelStore get() = store
@@ -78,18 +95,26 @@ class OverlayWindow(
         lifecycleScope.launch {
             val (initialX, initialY) = repository.getOverlayPosition()
 
+            val isShowOnStatusBarInitially = repository.isOverlayShowOnStatusBar.value
+            val extraFlags =
+                if (isShowOnStatusBarInitially) WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS else 0
+
             params = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or extraFlags,
                 PixelFormat.TRANSLUCENT
             ).apply {
                 gravity = Gravity.TOP or Gravity.START
                 x = initialX
                 y = initialY
+                if (isShowOnStatusBarInitially) {
+                    layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
             }
 
             val composeView = ComposeView(context)
@@ -101,27 +126,166 @@ class OverlayWindow(
                 val isOledTheme by repository.isOledThemeEnabled.collectAsState(initial = false)
                 PixelPulseTheme(isOledTheme = isOledTheme) {
                     val isLocked by repository.isOverlayLocked.collectAsState()
+                    val isShowOnStatusBar by repository.isOverlayShowOnStatusBar.collectAsState()
                     val bgColor by repository.overlayBgColor.collectAsState()
                     val textColor by repository.overlayTextColor.collectAsState()
                     val cornerRadius by repository.overlayCornerRadius.collectAsState()
+                    val padding by repository.overlayPadding.collectAsState()
                     val textSize by repository.overlayTextSize.collectAsState()
                     val textUp by repository.overlayTextUp.collectAsState()
                     val textDown by repository.overlayTextDown.collectAsState()
                     val upFirst by repository.overlayOrderUpFirst.collectAsState()
+                    val isOverlayHideBackground by repository.isOverlayHideBackground.collectAsState()
+                    val direction by repository.overlayDirection.collectAsState()
+                    val alignment by repository.overlayAlignment.collectAsState()
+                    val meterSpacing by repository.overlayMeterSpacing.collectAsState()
+                    val isOverlayPortraitOnly by repository.isOverlayPortraitOnly.collectAsState()
+                    val isOverlayHideInImmersiveMode by repository.isOverlayHideInImmersiveMode.collectAsState()
+                    val overlayAutoHideThreshold by repository.overlayAutoHideThreshold.collectAsState()
                     val isOverlayUseDefaultColors by repository.isOverlayUseDefaultColors.collectAsState()
                     val speedUnit by repository.speedUnit.collectAsState()
+                    val minSpeedUnit by repository.minSpeedUnit.collectAsState()
+                    
+                    val contextLocal = LocalContext.current
+                    val initialConfig = LocalConfiguration.current
+                    var orientation by remember { mutableIntStateOf(initialConfig.orientation) }
+                    var areSystemBarsVisible by remember { mutableStateOf(true) }
+                    var lowTrafficSamples by remember { mutableIntStateOf(0) }
+
+                    DisposableEffect(contextLocal) {
+                        val callbacks = object : ComponentCallbacks {
+                            override fun onConfigurationChanged(newConfig: Configuration) {
+                                orientation = newConfig.orientation
+                            }
+
+                            @Deprecated("Deprecated in Java")
+                            override fun onLowMemory() {}
+                        }
+                        contextLocal.applicationContext.registerComponentCallbacks(callbacks)
+                        onDispose {
+                            contextLocal.applicationContext.unregisterComponentCallbacks(callbacks)
+                        }
+                    }
+
+                    DisposableEffect(composeView) {
+                        val insetsListener = View.OnApplyWindowInsetsListener { _, insets ->
+                            areSystemBarsVisible =
+                                insets.isVisible(WindowInsets.Type.statusBars()) ||
+                                        insets.isVisible(WindowInsets.Type.navigationBars())
+                            insets
+                        }
+                        val attachListener = object : View.OnAttachStateChangeListener {
+                            override fun onViewAttachedToWindow(view: View) {
+                                view.requestApplyInsets()
+                                view.removeOnAttachStateChangeListener(this)
+                            }
+
+                            override fun onViewDetachedFromWindow(view: View) = Unit
+                        }
+                        composeView.setOnApplyWindowInsetsListener(insetsListener)
+                        if (composeView.isAttachedToWindow) {
+                            composeView.requestApplyInsets()
+                        } else {
+                            composeView.addOnAttachStateChangeListener(attachListener)
+                        }
+                        onDispose {
+                            composeView.setOnApplyWindowInsetsListener(null)
+                            composeView.removeOnAttachStateChangeListener(attachListener)
+                        }
+                    }
+
+                    LaunchedEffect(isShowOnStatusBar) {
+                        params?.let { p ->
+                            var changed = false
+                            if (isShowOnStatusBar) {
+                                if ((p.flags and WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS) == 0) {
+                                    p.flags =
+                                        p.flags or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                                    changed = true
+                                }
+                                if (p.layoutInDisplayCutoutMode != WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+                                    p.layoutInDisplayCutoutMode =
+                                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                                    changed = true
+                                }
+                            } else {
+                                if ((p.flags and WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS) != 0) {
+                                    p.flags =
+                                        p.flags and WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS.inv()
+                                    changed = true
+                                }
+                                if (p.layoutInDisplayCutoutMode != WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT) {
+                                    p.layoutInDisplayCutoutMode =
+                                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                                    changed = true
+                                }
+                            }
+                            if (changed) {
+                                windowManager.updateViewLayout(composeView, p)
+                            }
+                        }
+                    }
+
+                    val shouldHideForLandscape =
+                        isOverlayPortraitOnly &&
+                                orientation == Configuration.ORIENTATION_LANDSCAPE
+                    val shouldHideForImmersiveMode =
+                        isOverlayHideInImmersiveMode && !areSystemBarsVisible
+                    LaunchedEffect(speedUpdateVersion, overlayAutoHideThreshold) {
+                        lowTrafficSamples = when {
+                            speedUpdateVersion == 0L -> 0
+                            overlayAutoHideThreshold <= 0L -> 0
+                            speedState.totalSpeed < overlayAutoHideThreshold ->
+                                (lowTrafficSamples + 1)
+                                    .coerceAtMost(LOW_TRAFFIC_HIDE_SAMPLE_COUNT)
+
+                            else -> 0
+                        }
+                    }
+                    val shouldHideForLowTraffic =
+                        overlayAutoHideThreshold > 0L &&
+                                lowTrafficSamples >= LOW_TRAFFIC_HIDE_SAMPLE_COUNT
+
+                    val shouldHideOverlay =
+                        shouldHideForLandscape || shouldHideForImmersiveMode ||
+                                shouldHideForLowTraffic
+                    LaunchedEffect(shouldHideOverlay) {
+                        composeView.visibility = View.VISIBLE
+                        composeView.alpha = if (shouldHideOverlay) 0f else 1f
+
+                        params?.let { p ->
+                            val isNotTouchable =
+                                (p.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) != 0
+                            val shouldUpdateTouchFlag =
+                                shouldHideOverlay != isNotTouchable
+                            if (shouldUpdateTouchFlag) {
+                                p.flags = if (shouldHideOverlay) {
+                                    p.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                                } else {
+                                    p.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+                                }
+                                windowManager.updateViewLayout(composeView, p)
+                            }
+                        }
+                    }
 
                     OverlayContent(
                         speed = speedState,
                         useDefaultColors = isOverlayUseDefaultColors,
+                        hideBackground = isOverlayHideBackground,
                         bgColor = bgColor,
                         textColor = textColor,
                         cornerRadius = cornerRadius,
+                        padding = padding,
                         textSize = textSize,
                         textUp = textUp,
                         textDown = textDown,
                         upFirst = upFirst,
+                        direction = direction,
+                        alignment = alignment,
+                        meterSpacing = meterSpacing,
                         speedUnit = speedUnit,
+                        minSpeedUnit = minSpeedUnit,
                         onDrag = { x, y ->
                             if (!isLocked) {
                                 params?.let { p ->
@@ -148,6 +312,7 @@ class OverlayWindow(
 
     fun update(speed: NetSpeedData) {
         speedState = speed
+        speedUpdateVersion++
     }
 
     fun hide() {
@@ -170,20 +335,30 @@ class OverlayWindow(
 fun OverlayContent(
     speed: NetSpeedData,
     useDefaultColors: Boolean,
+    hideBackground: Boolean,
     bgColor: Int,
     textColor: Int,
     cornerRadius: Int,
+    padding: Int,
     textSize: Float,
     textUp: String,
     textDown: String,
     upFirst: Boolean,
+    direction: Int = 0,
+    alignment: Int = 0,
+    meterSpacing: Int = 8,
     speedUnit: String = "0",
+    minSpeedUnit: String = "0",
     onDrag: (Float, Float) -> Unit,
     onDragEnd: () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(cornerRadius.dp),
-        color = if (useDefaultColors) MaterialTheme.colorScheme.surface else Color(bgColor),
+        color = when {
+            hideBackground -> Color.Transparent
+            useDefaultColors -> MaterialTheme.colorScheme.surface
+            else -> Color(bgColor)
+        },
         modifier = Modifier.pointerInput(Unit) {
             detectDragGestures(
                 onDrag = { change, dragAmount ->
@@ -194,29 +369,96 @@ fun OverlayContent(
             )
         }
     ) {
-        val upText = "$textUp${NetworkRepository.formatSpeedLine(speed.uploadSpeed, speedUnit)}"
-        val downText =
-            "$textDown${NetworkRepository.formatSpeedLine(speed.downloadSpeed, speedUnit)}"
+        val upSpeedStr =
+            NetworkRepository.formatSpeedLine(speed.uploadSpeed, speedUnit, false, minSpeedUnit)
+        val downSpeedStr =
+            NetworkRepository.formatSpeedLine(speed.downloadSpeed, speedUnit, false, minSpeedUnit)
 
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = if (upFirst) upText else downText,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
-                color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
-                    textColor
+        val prefix1 = if (upFirst) textUp else textDown
+        val prefix2 = if (upFirst) textDown else textUp
+        val speed1 = if (upFirst) upSpeedStr else downSpeedStr
+        val speed2 = if (upFirst) downSpeedStr else upSpeedStr
+
+        val text1 = "$prefix1$speed1"
+        val text2 = "$prefix2$speed2"
+
+        if (direction == 0) {
+            val effectiveMeterSpacing = meterSpacing.coerceAtLeast(0)
+            // Horizontal
+            Row(
+                modifier = Modifier.padding(
+                    horizontal = padding.coerceAtLeast(0).dp,
+                    vertical = (padding / 2).coerceAtLeast(0).dp
+                ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = text1,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
+                    color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
+                        textColor
+                    )
                 )
-            )
-            Box(modifier = Modifier.padding(horizontal = 4.dp))
-            Text(
-                text = if (upFirst) downText else upText,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
-                color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
-                    textColor
+                Spacer(modifier = Modifier.width(effectiveMeterSpacing.dp))
+                Text(
+                    text = text2,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
+                    color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
+                        textColor
+                    )
                 )
-            )
+            }
+        } else {
+            // Vertical
+            val horizontalAlignment = when (alignment) {
+                1 -> Alignment.CenterHorizontally
+                2 -> Alignment.End
+                else -> Alignment.Start
+            }
+            Row(
+                modifier = Modifier.padding(
+                    horizontal = padding.coerceAtLeast(0).dp,
+                    vertical = (padding / 2).coerceAtLeast(0).dp
+                ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = prefix1,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
+                        color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
+                            textColor
+                        )
+                    )
+                    Text(
+                        text = prefix2,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
+                        color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
+                            textColor
+                        )
+                    )
+                }
+                Column(
+                    horizontalAlignment = horizontalAlignment
+                ) {
+                    Text(
+                        text = speed1,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
+                        color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
+                            textColor
+                        )
+                    )
+                    Text(
+                        text = speed2,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = textSize.sp),
+                        color = if (useDefaultColors) MaterialTheme.colorScheme.onSurface else Color(
+                            textColor
+                        )
+                    )
+                }
+            }
         }
     }
 }

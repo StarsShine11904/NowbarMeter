@@ -115,4 +115,35 @@
 
     <string name="battery_optimization_warning_title">Background Execution Restricted</string>
     <string name="battery_optimization_warning_subtitle">Tap to disable battery optimization so the meter doesn\'t stop.</string>
+
+    <!-- New overlay settings -->
+    <string name="settings_min_speed_unit">Minimum Display Unit</string>
+    <string name="settings_min_speed_unit_none">None</string>
+    <string name="settings_overlay_show_on_status_bar">Show Over Status Bar</string>
+    <string name="settings_overlay_show_on_status_bar_desc">Allow the floating window to be dragged over the status bar and notch area</string>
+    <string name="settings_overlay_position_x">X Position</string>
+    <string name="settings_overlay_position_x_desc">Horizontal position in px. Negative values are allowed.</string>
+    <string name="settings_overlay_position_y">Y Position</string>
+    <string name="settings_overlay_position_y_desc">Vertical position in px. Negative values are allowed.</string>
+    <string name="settings_overlay_portrait_only">Hide in Landscape</string>
+    <string name="settings_overlay_portrait_only_desc">Do not display floating window when device is in landscape mode</string>
+    <string name="settings_overlay_hide_in_immersive_mode">Hide in Immersive Mode</string>
+    <string name="settings_overlay_hide_in_immersive_mode_desc">Hide the floating window when the foreground app hides the system bars</string>
+    <string name="settings_overlay_auto_hide_threshold">Auto-hide Threshold</string>
+    <string name="settings_overlay_auto_hide_threshold_desc">Hide the floating window after sustained traffic below %1$s</string>
+    <string name="settings_overlay_auto_hide_threshold_disabled">Auto-hide is disabled</string>
+    <string name="settings_overlay_auto_hide_threshold_input_title">Custom Auto-hide Threshold (KB/s)</string>
+    <string name="settings_overlay_auto_hide_threshold_input_summary">Input the threshold value in KB/s directly. Enter 0 to disable.</string>
+    <string name="settings_overlay_hide_background">Hide Background</string>
+    <string name="settings_overlay_hide_background_desc">Make the floating window background fully transparent</string>
+    <string name="settings_overlay_padding">Background Padding</string>
+    <string name="settings_overlay_direction">Layout Direction</string>
+    <string name="settings_overlay_direction_horizontal">Horizontal (Single Line)</string>
+    <string name="settings_overlay_direction_vertical">Vertical (Stacked)</string>
+    <string name="settings_overlay_meter_spacing">Meter Spacing</string>
+    <string name="settings_overlay_meter_spacing_desc">Only applies when layout direction is horizontal</string>
+    <string name="settings_overlay_alignment">Text Alignment</string>
+    <string name="settings_overlay_alignment_start">Left</string>
+    <string name="settings_overlay_alignment_center">Center</string>
+    <string name="settings_overlay_alignment_end">Right</string>
 </resources>

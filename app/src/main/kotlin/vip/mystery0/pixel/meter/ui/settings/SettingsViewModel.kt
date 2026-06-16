@@ -38,6 +38,17 @@ class SettingsViewModel(
     val overlayTextDown = repository.overlayTextDown
     val overlayOrderUpFirst = repository.overlayOrderUpFirst
     val isOverlayLocked = repository.isOverlayLocked
+    val isOverlayShowOnStatusBar = repository.isOverlayShowOnStatusBar
+    val overlayPadding = repository.overlayPadding
+    val isOverlayHideBackground = repository.isOverlayHideBackground
+    val overlayDirection = repository.overlayDirection
+    val overlayAlignment = repository.overlayAlignment
+    val overlayMeterSpacing = repository.overlayMeterSpacing
+    val isOverlayPortraitOnly = repository.isOverlayPortraitOnly
+    val isOverlayHideInImmersiveMode = repository.isOverlayHideInImmersiveMode
+    val overlayAutoHideThreshold = repository.overlayAutoHideThreshold
+    val overlayX = repository.overlayX
+    val overlayY = repository.overlayY
 
     // Notification Settings
     val isNotificationEnabled = repository.isNotificationEnabled
@@ -60,6 +71,7 @@ class SettingsViewModel(
     // General Settings
     val samplingInterval = repository.samplingInterval
     val speedUnit = repository.speedUnit
+    val minSpeedUnit = repository.minSpeedUnit
     val isHideFromRecents = repository.isHideFromRecents
     val isOverlayUseDefaultColors = repository.isOverlayUseDefaultColors
     val isAutoStartServiceEnabled = repository.isAutoStartServiceEnabled
@@ -110,6 +122,16 @@ class SettingsViewModel(
     fun setOverlayTextUp(text: String) = repository.setOverlayTextUp(text)
     fun setOverlayTextDown(text: String) = repository.setOverlayTextDown(text)
     fun setOverlayOrderUpFirst(upFirst: Boolean) = repository.setOverlayOrderUpFirst(upFirst)
+    fun setOverlayShowOnStatusBar(show: Boolean) = repository.setOverlayShowOnStatusBar(show)
+    fun setOverlayPadding(padding: Int) = repository.setOverlayPadding(padding)
+    fun setOverlayHideBackground(hideBackground: Boolean) = repository.setOverlayHideBackground(hideBackground)
+    fun setOverlayDirection(direction: Int) = repository.setOverlayDirection(direction)
+    fun setOverlayAlignment(alignment: Int) = repository.setOverlayAlignment(alignment)
+    fun setOverlayMeterSpacing(spacing: Int) = repository.setOverlayMeterSpacing(spacing)
+    fun setOverlayPortraitOnly(portraitOnly: Boolean) = repository.setOverlayPortraitOnly(portraitOnly)
+    fun setOverlayHideInImmersiveMode(hideInImmersiveMode: Boolean) = repository.setOverlayHideInImmersiveMode(hideInImmersiveMode)
+    fun setOverlayAutoHideThreshold(threshold: Long) = repository.setOverlayAutoHideThreshold(threshold)
+    fun setOverlayPosition(x: Int, y: Int) = viewModelScope.launch { repository.saveOverlayPosition(x, y) }
 
     fun setNotificationEnabled(enabled: Boolean) = repository.setNotificationEnabled(enabled)
     fun setLiveUpdateEnabled(enabled: Boolean) = repository.setLiveUpdateEnabled(enabled)
@@ -135,6 +157,7 @@ class SettingsViewModel(
         repository.setAutoStartServiceEnabled(enabled)
 
     fun setSpeedUnit(unit: String) = repository.setSpeedUnit(unit)
+    fun setMinSpeedUnit(unit: String) = repository.setMinSpeedUnit(unit)
 
     fun setOledThemeEnabled(enabled: Boolean) = repository.setOledThemeEnabled(enabled)
 

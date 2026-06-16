@@ -115,4 +115,34 @@
 
     <string name="battery_optimization_warning_title">背景執行受限</string>
     <string name="battery_optimization_warning_subtitle">點擊以停用電池最佳化，以免監控停止。</string>
+
+    <string name="settings_min_speed_unit">最小顯示單位</string>
+    <string name="settings_min_speed_unit_none">無</string>
+    <string name="settings_overlay_show_on_status_bar">允許顯示在狀態列區域</string>
+    <string name="settings_overlay_show_on_status_bar_desc">開啟後浮動視窗可以被拖曳到狀態列上方，並適配瀏海區域，關閉時以預設狀態顯示</string>
+    <string name="settings_overlay_position_x">X 座標</string>
+    <string name="settings_overlay_position_x_desc">橫向位置，單位 px。允許輸入負數。</string>
+    <string name="settings_overlay_position_y">Y 座標</string>
+    <string name="settings_overlay_position_y_desc">縱向位置，單位 px。允許輸入負數。</string>
+    <string name="settings_overlay_portrait_only">僅在直向螢幕顯示</string>
+    <string name="settings_overlay_portrait_only_desc">在橫向螢幕模式下自動隱藏浮動視窗</string>
+    <string name="settings_overlay_hide_in_immersive_mode">沉浸模式下隱藏</string>
+    <string name="settings_overlay_hide_in_immersive_mode_desc">當前景應用程式隱藏系統狀態列和導覽列時，自動隱藏浮動視窗</string>
+    <string name="settings_overlay_auto_hide_threshold">自動隱藏閾值</string>
+    <string name="settings_overlay_auto_hide_threshold_desc">網路速度持續低於 %1$s 後隱藏浮動視窗</string>
+    <string name="settings_overlay_auto_hide_threshold_disabled">自動隱藏已停用</string>
+    <string name="settings_overlay_auto_hide_threshold_input_title">自訂隱藏閾值 (KB/s)</string>
+    <string name="settings_overlay_auto_hide_threshold_input_summary">直接輸入閾值數值，單位為 KB/s。輸入 0 可停用。</string>
+    <string name="settings_overlay_hide_background">隱藏背景</string>
+    <string name="settings_overlay_hide_background_desc">讓浮動視窗背景完全透明，僅保留文字</string>
+    <string name="settings_overlay_padding">背景內邊距</string>
+    <string name="settings_overlay_direction">排列方向</string>
+    <string name="settings_overlay_direction_horizontal">水平 (橫向單行)</string>
+    <string name="settings_overlay_direction_vertical">垂直 (上下堆疊)</string>
+    <string name="settings_overlay_meter_spacing">網速項目間距</string>
+    <string name="settings_overlay_meter_spacing_desc">僅在排列方向為水平時生效</string>
+    <string name="settings_overlay_alignment">文字對齊方式</string>
+    <string name="settings_overlay_alignment_start">靠左對齊</string>
+    <string name="settings_overlay_alignment_center">置中對齊</string>
+    <string name="settings_overlay_alignment_end">靠右對齊</string>
 </resources>
