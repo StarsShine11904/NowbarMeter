@@ -97,12 +97,6 @@ class NetworkRepository(
     private val _overlayAutoHideThreshold = MutableStateFlow(0L)
     val overlayAutoHideThreshold: StateFlow<Long> = _overlayAutoHideThreshold.asStateFlow()
 
-    private val _overlayX = MutableStateFlow(100)
-    val overlayX: StateFlow<Int> = _overlayX.asStateFlow()
-
-    private val _overlayY = MutableStateFlow(200)
-    val overlayY: StateFlow<Int> = _overlayY.asStateFlow()
-
     private val _notificationTextUp = MutableStateFlow("▲ ")
     val notificationTextUp: StateFlow<String> = _notificationTextUp.asStateFlow()
 
@@ -200,8 +194,6 @@ class NetworkRepository(
                 _isOverlayPortraitOnly.value = prefs[DataStoreRepository.KEY_OVERLAY_PORTRAIT_ONLY] ?: false
                 _isOverlayHideInImmersiveMode.value = prefs[DataStoreRepository.KEY_OVERLAY_HIDE_IN_IMMERSIVE_MODE] ?: false
                 _overlayAutoHideThreshold.value = prefs[DataStoreRepository.KEY_OVERLAY_AUTO_HIDE_THRESHOLD] ?: 0L
-                _overlayX.value = prefs[DataStoreRepository.KEY_OVERLAY_X] ?: 100
-                _overlayY.value = prefs[DataStoreRepository.KEY_OVERLAY_Y] ?: 200
                 _notificationTextUp.value =
                     prefs[DataStoreRepository.KEY_NOTIFICATION_TEXT_UP] ?: "▲ "
                 _notificationTextDown.value =
@@ -285,8 +277,6 @@ class NetworkRepository(
         scope.launch { dataStoreRepository.isOverlayPortraitOnly.collect { _isOverlayPortraitOnly.value = it } }
         scope.launch { dataStoreRepository.isOverlayHideInImmersiveMode.collect { _isOverlayHideInImmersiveMode.value = it } }
         scope.launch { dataStoreRepository.overlayAutoHideThreshold.collect { _overlayAutoHideThreshold.value = it } }
-        scope.launch { dataStoreRepository.overlayX.collect { _overlayX.value = it } }
-        scope.launch { dataStoreRepository.overlayY.collect { _overlayY.value = it } }
         scope.launch {
             dataStoreRepository.notificationTextUp.collect { _notificationTextUp.value = it }
         }

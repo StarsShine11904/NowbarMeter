@@ -5,24 +5,6 @@ plugins {
 }
 
 val packageName = "com.kakao.taxi"
-val gitVersionCode: Int = providers.exec {
-    commandLine(
-        "git",
-        "rev-list",
-        "HEAD",
-        "--count"
-    )
-}.standardOutput.asText.get().trim().toInt()
-val gitVersionName: String =
-    providers.exec {
-        commandLine(
-            "git",
-            "rev-parse",
-            "--short=8",
-            "HEAD"
-        )
-    }.standardOutput.asText.get().trim()
-val appVersionName: String = libs.versions.app.version.get()
 
 kotlin {
     compilerOptions {
@@ -41,8 +23,8 @@ android {
         applicationId = "com.kakao.taxi"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = gitVersionCode
-        versionName = appVersionName
+        versionCode = 1
+        versionName = "1.0"
     }
     packaging {
         resources {
@@ -56,13 +38,11 @@ android {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
-            versionNameSuffix = ".d$gitVersionCode.$gitVersionName"
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles("proguard-rules.pro")
-            versionNameSuffix = ".r$gitVersionCode.$gitVersionName"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
